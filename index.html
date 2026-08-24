@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BMW E36 — Interactieve Voorwielophanging</title>
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/build/three.module.js",
+        "three/addons/": "./vendor/three/examples/jsm/"
+      }
+    }
+  </script>
+</head>
+<body>
+  <div id="app">
+    <header id="topbar">
+      <h1>BMW E36 <span>·</span> Interactieve Voorwielophanging</h1>
+      <div id="topbar-actions">
+        <button id="btn-assemble" class="btn">Monteer alles</button>
+        <button id="btn-explode" class="btn">Demonteer alles</button>
+      </div>
+    </header>
+
+    <main>
+      <div id="viewport">
+        <canvas id="scene"></canvas>
+        <div id="viewport-hint">Sleep om te draaien · scroll om te zoomen · klik op een onderdeel</div>
+        <div id="explode-slider-wrap">
+          <label for="explode-range">Demontagegraad</label>
+          <input type="range" id="explode-range" min="0" max="100" value="0" />
+        </div>
+      </div>
+
+      <aside id="sidebar">
+        <div id="info-panel">
+          <div id="info-empty">
+            <p>Klik op een onderdeel in het 3D-model om info te zien: naam, functie, montagevolgorde en veelgemaakte fouten.</p>
+          </div>
+          <div id="info-content" class="hidden">
+            <div class="info-order-badge" id="info-order"></div>
+            <h2 id="info-name"></h2>
+            <section>
+              <h3>Functie</h3>
+              <p id="info-function"></p>
+            </section>
+            <section>
+              <h3>Montagevolgorde</h3>
+              <p id="info-sequence"></p>
+            </section>
+            <section>
+              <h3>Veelgemaakte fouten</h3>
+              <p id="info-mistakes"></p>
+            </section>
+            <button id="btn-toggle-part" class="btn btn-secondary"></button>
+          </div>
+        </div>
+
+        <div id="parts-list-wrap">
+          <h3>Onderdelen (montagevolgorde)</h3>
+          <ol id="parts-list"></ol>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
