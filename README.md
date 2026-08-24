@@ -18,7 +18,7 @@ Bovenin de app kun je tussen elf deelsystemen wisselen:
 2. **Achterwielophanging** — semi-trailing arm: draagarm, aandrijfas, veer/demper, handremtrommel-in-schijf.
 3. **Remsysteem** — het complete, diagonaal gesplitste circuit: pedaal, bekrachtiger, hoofdremcilinder, ABS, leidingen, handrem.
 4. **Stuurinrichting** — stuurwiel, kolom, stuurhuis en de hydraulische bekrachtiging.
-5. **Motor** — op blokniveau: de M40B18 die momenteel in de auto zit (SOHC 1.8 viercilinder, geen VANOS, tandriem), met krukas, zuigers, cilinderkop, distributie en hulpstukken.
+5. **Motor** — de M40B18 die momenteel in de auto zit (SOHC 1.8 viercilinder, geen VANOS, tandriem), uitgewerkt tot 27 onderdelen: van smeersysteem (carter, oliepomp, oliefilter, hoofdlagers) en klepbediening (nokkenas, kleppen, tuimelaars) tot ontsteking (verdeler, bobine, bougies), inlaattraject (luchtfilterhuis, gasklephuis) en motormanagement (DME).
 6. **VANOS-eenheid** — niet aanwezig op de huidige M40B18; een referentie-uitwerking van de variabele nokkenastiming van de M50TU/M52/S50-zescilinder, met net iets meer detail (dit was het oorspronkelijke idee achter de tool), relevant zodra er een VANOS-motor voor terugkomt.
 7. **Koelsysteem** — radiateur, slangen, thermostaat, waterpomp, ventilator/viscokoppeling.
 8. **Koppeling & versnellingsbak** — vliegwiel, koppelingsplaat, drukgroep, bak, hydrauliek.
