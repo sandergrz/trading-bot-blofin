@@ -293,6 +293,168 @@ rangeInput.addEventListener("input", () => {
   updateToggleButton();
 });
 
+// --- Onderdelenlijst (checklist: gekocht / nog te kopen) --------------------
+
+const CHECKLIST_STORAGE_KEY = "e36-onderdelen-status";
+
+function loadStatusMap() {
+  try {
+    const raw = localStorage.getItem(CHECKLIST_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveStatusMap(map) {
+  try {
+    localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(map));
+  } catch {
+    // localStorage kan onbeschikbaar zijn (bv. privénavigatie); status wordt dan niet bewaard.
+  }
+}
+
+const statusMap = loadStatusMap();
+
+function statusKey(systemId, partId) {
+  return `${systemId}::${partId}`;
+}
+
+function isBought(systemId, partId) {
+  return !!statusMap[statusKey(systemId, partId)];
+}
+
+function setBought(systemId, partId, bought) {
+  const key = statusKey(systemId, partId);
+  if (bought) statusMap[key] = true;
+  else delete statusMap[key];
+  saveStatusMap(statusMap);
+}
+
+// Platte lijst van alle onderdelen in alle systemen, voor de checklist.
+// De meshes zijn hier alleen nodig om aan de metadata te komen en worden meteen weer opgeruimd.
+const allPartsBySystem = SYSTEMS.map((systemModule) => {
+  const defs = systemModule.createParts();
+  defs.forEach((def) => disposeObject3D(def.mesh));
+  return {
+    systemModule,
+    parts: [...defs]
+      .sort((a, b) => a.order - b.order)
+      .map((def) => ({ id: def.id, name: def.name, order: def.order })),
+  };
+});
+
+const checklistOverlay = document.getElementById("checklist-overlay");
+const checklistBody = document.getElementById("checklist-body");
+const checklistSummary = document.getElementById("checklist-summary");
+
+function totalPartsCount() {
+  return allPartsBySystem.reduce((sum, s) => sum + s.parts.length, 0);
+}
+
+function boughtPartsCount() {
+  let count = 0;
+  allPartsBySystem.forEach(({ systemModule, parts: sysParts }) => {
+    sysParts.forEach((p) => {
+      if (isBought(systemModule.meta.id, p.id)) count++;
+    });
+  });
+  return count;
+}
+
+function updateChecklistSummary() {
+  checklistSummary.textContent = `${boughtPartsCount()} van ${totalPartsCount()} onderdelen gekocht`;
+}
+
+function updateSystemProgress(systemId) {
+  const group = allPartsBySystem.find((s) => s.systemModule.meta.id === systemId);
+  if (!group) return;
+  const bought = group.parts.filter((p) => isBought(systemId, p.id)).length;
+  const el = checklistBody.querySelector(`[data-system-progress="${systemId}"]`);
+  if (el) el.textContent = `${bought}/${group.parts.length}`;
+}
+
+function buildChecklist() {
+  checklistBody.innerHTML = "";
+  allPartsBySystem.forEach(({ systemModule, parts: sysParts }) => {
+    const section = document.createElement("section");
+    section.className = "checklist-system";
+
+    const header = document.createElement("div");
+    header.className = "checklist-system-header";
+    const h3 = document.createElement("h3");
+    h3.textContent = systemModule.meta.name;
+    const progress = document.createElement("span");
+    progress.className = "checklist-system-progress";
+    progress.dataset.systemProgress = systemModule.meta.id;
+    header.append(h3, progress);
+    section.appendChild(header);
+
+    const ul = document.createElement("ul");
+    ul.className = "checklist-items";
+
+    sysParts.forEach((p) => {
+      const li = document.createElement("li");
+      li.className = "checklist-item";
+
+      const bought = isBought(systemModule.meta.id, p.id);
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "checklist-checkbox";
+      checkbox.checked = bought;
+      checkbox.setAttribute("aria-label", `${p.name} gekocht`);
+
+      const nameBtn = document.createElement("button");
+      nameBtn.type = "button";
+      nameBtn.className = "checklist-part-name";
+      nameBtn.textContent = p.name;
+      nameBtn.addEventListener("click", () => {
+        hideChecklist();
+        loadSystem(systemModule);
+        selectPart(p.id);
+      });
+
+      const badge = document.createElement("span");
+      badge.className = `checklist-badge ${bought ? "bought" : "tobuy"}`;
+      badge.textContent = bought ? "Gekocht" : "Nog te kopen";
+
+      checkbox.addEventListener("change", () => {
+        setBought(systemModule.meta.id, p.id, checkbox.checked);
+        badge.textContent = checkbox.checked ? "Gekocht" : "Nog te kopen";
+        badge.classList.toggle("bought", checkbox.checked);
+        badge.classList.toggle("tobuy", !checkbox.checked);
+        updateSystemProgress(systemModule.meta.id);
+        updateChecklistSummary();
+      });
+
+      li.append(checkbox, nameBtn, badge);
+      ul.appendChild(li);
+    });
+
+    section.appendChild(ul);
+    checklistBody.appendChild(section);
+  });
+
+  allPartsBySystem.forEach(({ systemModule }) => updateSystemProgress(systemModule.meta.id));
+  updateChecklistSummary();
+}
+
+function showChecklist() {
+  buildChecklist();
+  checklistOverlay.classList.remove("hidden");
+}
+
+function hideChecklist() {
+  checklistOverlay.classList.add("hidden");
+}
+
+document.getElementById("btn-checklist").addEventListener("click", showChecklist);
+document.getElementById("btn-close-checklist").addEventListener("click", hideChecklist);
+checklistOverlay.addEventListener("click", (event) => {
+  if (event.target === checklistOverlay) hideChecklist();
+});
+
 // --- Render loop -------------------------------------------------------------
 
 function resize() {

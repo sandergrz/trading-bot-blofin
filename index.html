@@ -20,6 +20,7 @@
       <div id="topbar-row">
         <h1>BMW E36 <span>·</span> Interactief Samenstellingsplan</h1>
         <div id="topbar-actions">
+          <button id="btn-checklist" class="btn">Onderdelenlijst</button>
           <button id="btn-assemble" class="btn">Monteer alles</button>
           <button id="btn-explode" class="btn">Demonteer alles</button>
         </div>
@@ -68,6 +69,19 @@
         </div>
       </aside>
     </main>
+  </div>
+
+  <div id="checklist-overlay" class="hidden">
+    <div id="checklist-panel">
+      <div id="checklist-header">
+        <div>
+          <h2>Onderdelenlijst</h2>
+          <p id="checklist-summary"></p>
+        </div>
+        <button id="btn-close-checklist" class="btn" aria-label="Sluiten">Sluiten</button>
+      </div>
+      <div id="checklist-body"></div>
+    </div>
   </div>
 
   <script type="module" src="main.js"></script>
