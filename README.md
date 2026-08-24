@@ -18,8 +18,8 @@ Bovenin de app kun je tussen elf deelsystemen wisselen:
 2. **Achterwielophanging** — semi-trailing arm: draagarm, aandrijfas, veer/demper, handremtrommel-in-schijf.
 3. **Remsysteem** — het complete, diagonaal gesplitste circuit: pedaal, bekrachtiger, hoofdremcilinder, ABS, leidingen, handrem.
 4. **Stuurinrichting** — stuurwiel, kolom, stuurhuis en de hydraulische bekrachtiging.
-5. **Motor** — op blokniveau: krukas, zuigers, cilinderkop, distributie, hulpstukken.
-6. **VANOS-eenheid** — de variabele nokkenastiming van de M50TU/M52/S50, met net iets meer detail (dit was het oorspronkelijke idee achter de tool).
+5. **Motor** — op blokniveau: de M40B18 die momenteel in de auto zit (SOHC 1.8 viercilinder, geen VANOS, tandriem), met krukas, zuigers, cilinderkop, distributie en hulpstukken.
+6. **VANOS-eenheid** — niet aanwezig op de huidige M40B18; een referentie-uitwerking van de variabele nokkenastiming van de M50TU/M52/S50-zescilinder, met net iets meer detail (dit was het oorspronkelijke idee achter de tool), relevant zodra er een VANOS-motor voor terugkomt.
 7. **Koelsysteem** — radiateur, slangen, thermostaat, waterpomp, ventilator/viscokoppeling.
 8. **Koppeling & versnellingsbak** — vliegwiel, koppelingsplaat, drukgroep, bak, hydrauliek.
 9. **Differentieel & achteras** — kroonwiel, pignon, differentieelkooi (LSD), diff-mounts.
@@ -67,6 +67,12 @@ Of open de map met de "Live Server"-extensie van VS Code.
   van het hele systeem, in (omgekeerde) montagevolgorde.
 - **Demontagegraad-slider** geeft handmatige controle over hoe ver alles uit
   elkaar staat.
+- **"Onderdelenlijst"** (topbar) opent een overzicht van alle onderdelen uit
+  alle systemen, gegroepeerd per systeem, met een voortgangsteller per systeem
+  en in totaal. Elk onderdeel heeft een vinkje "gekocht" / "nog te kopen"
+  (bewaard in `localStorage`, dus blijft staan tussen sessies), en de naam is
+  klikbaar: dat sluit de lijst, schakelt naar het juiste systeem en selecteert
+  meteen dat ene onderdeel in de 3D-viewer.
 
 ## Techniek
 

@@ -2,6 +2,10 @@
 // van een BMW E36 zescilinder (M50TU/M52/S50). Dit was het oorspronkelijke idee achter
 // deze tool, dus met net iets meer detail uitgewerkt dan de andere systemen.
 //
+// Let op: de M40B18 die momenteel in de auto zit heeft géén VANOS (zie het
+// Motor-systeem) — dit systeem is een referentie voor zodra er een VANOS-motor
+// (M50TU/M52/S50/S54) voor terugkomt.
+//
 // Coordinatensysteem (meters): z-as = as van nokkenas/kettingwiel (voorkant motor),
 // x/y = radiaal vanaf het hart van de eenheid.
 
@@ -13,7 +17,7 @@ export const meta = {
   name: "VANOS-eenheid",
   short: "VANOS",
   description:
-    "De variabele nokkenastiming van de M50TU/M52/S50-zescilinder: van aandrijftandwiel tot het beruchte 'VANOS rattle'-slijtagepunt.",
+    "Niet aanwezig op de huidige M40B18 — referentie voor de variabele nokkenastiming van de M50TU/M52/S50-zescilinder, relevant zodra er een VANOS-motor voor terugkomt.",
   cameraPosition: [1.1, 0.7, 1.2],
   cameraTarget: [0, 0, 0.02],
 };
@@ -30,7 +34,7 @@ export function createParts() {
     explodeOffset: [0, 0.35, 0.15],
     info: {
       functie:
-        "Huisvest het hydraulische verstelmechanisme dat de nokkenastiming continu variabel maakt: meer koppel bij laag toerental, meer vermogen bij hoog toerental. De vroege M50TU heeft alleen inlaat-VANOS, de M52TU/S50/S54 hebben 'dubbele VANOS' op zowel inlaat als uitlaat.",
+        "Huisvest het hydraulische verstelmechanisme dat de nokkenastiming continu variabel maakt: meer koppel bij laag toerental, meer vermogen bij hoog toerental. De vroege M50TU heeft alleen inlaat-VANOS, de M52TU/S50/S54 hebben 'dubbele VANOS' op zowel inlaat als uitlaat. Let op: de M40B18 die nu in de auto zit heeft geen VANOS — dit systeem hoort bij een latere zescilinder-swap.",
       volgorde:
         "Gemonteerd aan de voorkant van de cilinderkop, uitgelijnd met de nokkenas, nadat de distributie is aangebracht maar vóórdat deze definitief wordt afgesteld.",
       fouten:

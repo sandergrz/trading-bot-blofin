@@ -1,20 +1,22 @@
-// Schematische geometrie + kennisdata voor een BMW E36-motor op blokniveau
-// (generiek voor de gangbare E36-motoren: M40/M42/M44 viercilinder,
-// M50/M52/S50 zescilinder, en populaire swaps zoals de S54).
+// Schematische geometrie + kennisdata voor de motor die momenteel in de auto zit:
+// de M40B18 — een SOHC 1.8 viercilinder zonder VANOS, de basismotor waarmee de
+// E36 316i/318i oorspronkelijk werd geleverd. Blijft ook relevant als referentie
+// zodra er een zescilinder (M50/M52/S50/S54) voor terugkomt — vandaar dat de
+// swap-context in de teksten hieronder staat.
 //
 // Coordinatensysteem (meters): x=0 hart van de motor, y=0 onderkant blok,
 // z>0 voorkant motor (poelie-/radiateurzijde), z<0 vliegwielzijde (richting bak).
 
 import * as THREE from "three";
-import { makeLink, makeBox, makeCylinder, makeTorus, makeCurvedTube } from "./helpers.js";
+import { makeLink, makeBox, makeCylinder, makeCurvedTube } from "./helpers.js";
 
 export const meta = {
   id: "motor",
   name: "Motor",
   short: "Motor",
   description:
-    "De motor op blokniveau: van krukas en zuigers tot cilinderkop, distributie en hulpstukken — generiek voor de gangbare E36 vier- en zescilinders.",
-  cameraPosition: [2.9, 1.7, 2.6],
+    "De huidige motor: de M40B18 (SOHC 1.8, viercilinder, geen VANOS, tandriem) — met een doorkijkje naar de populaire zescilinder-swaps in de E36 drift-scene.",
+  cameraPosition: [2.5, 1.6, 2.3],
   cameraTarget: [0, 0.15, 0],
 };
 
@@ -26,15 +28,15 @@ export function createParts() {
     name: "Motorblok",
     order: 1,
     color: 0x4a5568,
-    mesh: makeBox([0, 0.05, 0], [0.5, 0.5, 0.85], 0x4a5568),
+    mesh: makeBox([0, 0.05, 0], [0.46, 0.46, 0.55], 0x4a5568),
     explodeOffset: [0, -1.1, 0],
     info: {
       functie:
-        "Het blok huisvest de cilinders, de krukas en het grootste deel van het smeersysteem — de basis waarop alle andere motoronderdelen gebouwd worden. De E36 kwam standaard met viercilinder- (M40/M42/M44) of zescilindermotoren (M50/M52/S50).",
+        "Het blok huisvest de vier cilinders, de krukas en het grootste deel van het smeersysteem. In deze auto zit momenteel de M40B18: een 1.8 liter SOHC-viercilinder (M40-serie), de basismotor waarmee de E36 316i/318i oorspronkelijk geleverd werd.",
       volgorde:
         "Wordt als eerste op de motorsteunen in de motorruimte geplaatst, vóórdat kop, kleppendeksel en hulpstukken worden gemonteerd.",
       fouten:
-        "Bij een motorswap — in de E36 drift-scene erg populair, denk aan een S54 uit de E46 M3, of zelfs 2JZ/LS-swaps — de motorsteunen en het extra motorgewicht niet goed doorrekenen. Een te zwaar of verkeerd gepositioneerd blok verstoort de gewichtsverdeling en daarmee het drift-gedrag van de auto.",
+        "De M40B18 is een prima betrouwbare basismotor, maar met relatief weinig vermogen (rond de 90-100 pk) voor serieus driften. Bij een motorswap vanuit dit blok — in de E36 drift-scene erg populair, denk aan een M50/M52/S50/S54-zescilinder of zelfs 2JZ/LS-swaps — de motorsteunen en het extra motorgewicht niet goed doorrekenen: een te zwaar of verkeerd gepositioneerd blok verstoort de gewichtsverdeling en daarmee het drift-gedrag van de auto.",
     },
   });
 
@@ -44,24 +46,24 @@ export function createParts() {
     name: "Krukas",
     order: 2,
     color: 0x8a94a3,
-    mesh: makeCylinder(crankCenter, 0.045, 0.78, 0x8a94a3, { axis: "z", metalness: 0.7, roughness: 0.25 }),
+    mesh: makeCylinder(crankCenter, 0.042, 0.5, 0x8a94a3, { axis: "z", metalness: 0.7, roughness: 0.25 }),
     explodeOffset: [0, -0.5, 0],
     info: {
       functie:
-        "Zet de op-en-neergaande beweging van de zuigers om in een draaiende beweging, die uiteindelijk via koppeling, versnellingsbak en differentieel de achterwielen aandrijft.",
+        "Zet de op-en-neergaande beweging van de vier zuigers om in een draaiende beweging, die uiteindelijk via koppeling, versnellingsbak en differentieel de achterwielen aandrijft.",
       volgorde:
         "Als eerste bewegende onderdeel in het kale blok gelegerd, vóórdat zuigers en drijfstangen gemonteerd worden.",
       fouten:
-        "De hoofdlagers (main bearings) met verkeerde speling monteren, of de aandraaivolgorde en het aandraaimoment van de hoofdlagerkappen niet aanhouden — leidt tot vroegtijdige lagerschade, extra funest bij een motor die regelmatig hoge toerentallen en belasting te verduren krijgt tijdens het driften.",
+        "De hoofdlagers (main bearings) met verkeerde speling monteren, of de aandraaivolgorde en het aandraaimoment van de hoofdlagerkappen niet aanhouden — leidt tot vroegtijdige lagerschade.",
     },
   });
 
   const pistonGroup = new THREE.Group();
-  const cylinderCount = 6;
+  const cylinderCount = 4;
   for (let i = 0; i < cylinderCount; i++) {
-    const z = -0.32 + (i * 0.64) / (cylinderCount - 1);
-    pistonGroup.add(makeCylinder([0, 0.16, z], 0.045, 0.09, 0x9aa4b5, { metalness: 0.6, roughness: 0.3 }));
-    pistonGroup.add(makeLink([0, 0.12, z], [crankCenter[0], crankCenter[1], z], 0.014, 0x707070));
+    const z = -0.18 + (i * 0.36) / (cylinderCount - 1);
+    pistonGroup.add(makeCylinder([0, 0.15, z], 0.048, 0.09, 0x9aa4b5, { metalness: 0.6, roughness: 0.3 }));
+    pistonGroup.add(makeLink([0, 0.11, z], [crankCenter[0], crankCenter[1], z], 0.014, 0x707070));
   }
   defs.push({
     id: "zuigers",
@@ -72,7 +74,7 @@ export function createParts() {
     explodeOffset: [0, 0.7, 0],
     info: {
       functie:
-        "Zetten de verbrandingsdruk om in een kracht op de krukas: de zuigers bewegen op en neer in de cilinders, de drijfstangen verbinden ze met de krukas.",
+        "Zetten de verbrandingsdruk om in een kracht op de krukas: de vier zuigers bewegen op en neer in de cilinders, de drijfstangen verbinden ze met de krukas.",
       volgorde:
         "Gemonteerd nadat de krukas in het blok ligt, vóórdat de cilinderkop erop geplaatst wordt.",
       fouten:
@@ -85,11 +87,11 @@ export function createParts() {
     name: "Cilinderkop",
     order: 4,
     color: 0x5a6472,
-    mesh: makeBox([0, 0.34, 0], [0.46, 0.2, 0.82], 0x5a6472),
+    mesh: makeBox([0, 0.32, 0], [0.42, 0.2, 0.52], 0x5a6472),
     explodeOffset: [0, 0.9, 0],
     info: {
       functie:
-        "Sluit de cilinders af en huisvest de kleppen, de nokkenas(sen) en — bij de meeste E36-motoren — de VANOS-eenheid die de klepafstelling regelt.",
+        "Sluit de cilinders af en huisvest de kleppen en de nokkenas. De M40 is een SOHC-motor: één nokkenas, 8 kleppen (2 per cilinder), zonder VANOS — variabele klepafstelling kwam pas later, met de M50TU-zescilinder in de line-up.",
       volgorde:
         "Op het blok gemonteerd nadat zuigers en drijfstangen erin zitten, met een nieuwe koppakking ertussen.",
       fouten:
@@ -102,11 +104,11 @@ export function createParts() {
     name: "Kleppendeksel",
     order: 5,
     color: 0x20242c,
-    mesh: makeBox([0, 0.48, 0], [0.42, 0.08, 0.78], 0x20242c),
+    mesh: makeBox([0, 0.44, 0], [0.38, 0.07, 0.48], 0x20242c),
     explodeOffset: [0, 0.7, -0.6],
     info: {
       functie:
-        "Sluit de bovenkant van de cilinderkop af en houdt de olie bij de kleppen en nokkenas binnen de motor.",
+        "Sluit de bovenkant van de cilinderkop af en houdt de olie bij de klep- en nokkenasbediening binnen de motor.",
       volgorde:
         "Als een van de laatste stappen bovenop de gemonteerde cilinderkop geplaatst.",
       fouten:
@@ -114,51 +116,51 @@ export function createParts() {
     },
   });
 
-  const crankGear = [0, -0.07, 0.42];
-  const camGear = [0, 0.32, 0.42];
+  const crankGear = [0, -0.07, 0.27];
+  const camGear = [0, 0.28, 0.27];
   const timingGroup = new THREE.Group();
-  timingGroup.add(makeCylinder(crankGear, 0.06, 0.03, 0x2f3644, { axis: "z" }));
-  timingGroup.add(makeCylinder(camGear, 0.07, 0.03, 0x2f3644, { axis: "z" }));
-  timingGroup.add(makeLink([crankGear[0] - 0.06, crankGear[1], crankGear[2]], [camGear[0] - 0.07, camGear[1], camGear[2]], 0.008, 0x707070));
-  timingGroup.add(makeLink([crankGear[0] + 0.06, crankGear[1], crankGear[2]], [camGear[0] + 0.07, camGear[1], camGear[2]], 0.008, 0x707070));
+  timingGroup.add(makeCylinder(crankGear, 0.055, 0.03, 0x2f3644, { axis: "z" }));
+  timingGroup.add(makeCylinder(camGear, 0.065, 0.03, 0x2f3644, { axis: "z" }));
+  timingGroup.add(makeLink([crankGear[0] - 0.055, crankGear[1], crankGear[2]], [camGear[0] - 0.065, camGear[1], camGear[2]], 0.008, 0x707070));
+  timingGroup.add(makeLink([crankGear[0] + 0.055, crankGear[1], crankGear[2]], [camGear[0] + 0.065, camGear[1], camGear[2]], 0.008, 0x707070));
   defs.push({
-    id: "distributie",
-    name: "Distributieketting/-riem",
+    id: "distributieriem",
+    name: "Distributieriem",
     order: 6,
     color: 0x2f3644,
     mesh: timingGroup,
     explodeOffset: [0, 0.2, 0.9],
     info: {
       functie:
-        "Houdt de rotatie van de krukas en de nokkenas(sen) — en daarmee de klepbediening — synchroon met de zuigerbeweging. De M50/M52/S50/S54-motoren gebruiken een ketting, de oudere M40/M42 een riem.",
+        "Houdt de rotatie van de krukas en de (ene) nokkenas — en daarmee de klepbediening — synchroon met de zuigerbeweging. De M40B18 gebruikt hiervoor een tandriem; pas de latere M50TU-zescilinders e.v. gingen over op een ketting.",
       volgorde:
         "Gemonteerd nadat kop en blok met elkaar verbonden zijn, met de kruk- en nokkenastandwielen exact op hun merktekens uitgelijnd.",
       fouten:
-        "De kleppen en zuigers niet correct 'op hun merktekens' (op tijd) zetten bij montage. Vrijwel alle E36-motoren zijn 'interference engines' — de kleppen kunnen de zuigers raken als de timing verkeerd staat, wat direct zware motorschade geeft bij het starten.",
+        "De M40 is een 'interference engine': als de riem springt of afwijkt van zijn merktekens, raken de kleppen de zuigers en is de schade direct. Preventief vervangen ruim binnen het voorgeschreven interval is bij deze motor geen overbodige luxe, zeker niet als de vervangingsgeschiedenis onbekend is.",
     },
   });
 
-  const waterPumpCenter = [0, -0.02, 0.5];
+  const waterPumpCenter = [0, -0.02, 0.32];
   defs.push({
     id: "waterpomp",
     name: "Waterpomp",
     order: 7,
     color: 0x6e7889,
-    mesh: makeCylinder(waterPumpCenter, 0.075, 0.09, 0x6e7889, { axis: "z", metalness: 0.5, roughness: 0.4 }),
+    mesh: makeCylinder(waterPumpCenter, 0.07, 0.09, 0x6e7889, { axis: "z", metalness: 0.5, roughness: 0.4 }),
     explodeOffset: [0.5, 0, 0.4],
     info: {
       functie:
         "Pompt koelvloeistof door blok, cilinderkop en radiateur om de motor op bedrijfstemperatuur te houden.",
       volgorde:
-        "Aan de voorkant van het blok gemonteerd, vaak aangedreven door dezelfde ketting/riem als de nokkenas.",
+        "Aan de voorkant van het blok gemonteerd; bij de M40 wordt de pomp mee aangedreven door de distributieriem.",
       fouten:
-        "Een waterpomp met een lekkende as-afdichting laten zitten 'omdat hij nog niet echt lekt' — de inwendige lagers kunnen zonder duidelijke waarschuwing verslijten, tot de pomp plotseling vastloopt en de distributie beschadigt.",
+        "Een waterpomp met een lekkende as-afdichting laten zitten 'omdat hij nog niet echt lekt' — de inwendige lagers kunnen zonder duidelijke waarschuwing verslijten, tot de pomp plotseling vastloopt en de distributieriem beschadigt. Bij vervanging van de riem wordt de waterpomp om die reden vaak in één moeite mee vervangen.",
     },
   });
 
-  const pulleyCenter = [0, -0.07, 0.58];
+  const pulleyCenter = [0, -0.07, 0.37];
   const pulleyGroup = new THREE.Group();
-  pulleyGroup.add(makeCylinder(pulleyCenter, 0.1, 0.05, 0x394452, { axis: "z", metalness: 0.6 }));
+  pulleyGroup.add(makeCylinder(pulleyCenter, 0.095, 0.05, 0x394452, { axis: "z", metalness: 0.6 }));
   defs.push({
     id: "krukaspoelie",
     name: "Krukaspoelie + accessoireriem",
@@ -176,13 +178,13 @@ export function createParts() {
     },
   });
 
-  const alternatorCenter = [0.24, 0.08, 0.48];
+  const alternatorCenter = [0.2, 0.08, 0.3];
   defs.push({
     id: "alternator",
     name: "Alternator",
     order: 9,
     color: 0x707070,
-    mesh: makeCylinder(alternatorCenter, 0.065, 0.11, 0x707070, { axis: "z", metalness: 0.55, roughness: 0.4 }),
+    mesh: makeCylinder(alternatorCenter, 0.06, 0.1, 0x707070, { axis: "z", metalness: 0.55, roughness: 0.4 }),
     explodeOffset: [0.6, 0.2, 0.3],
     info: {
       functie:
@@ -199,11 +201,11 @@ export function createParts() {
     name: "Inlaatspruitstuk",
     order: 10,
     color: 0xb5bdc9,
-    mesh: makeBox([-0.34, 0.3, 0], [0.14, 0.14, 0.65], 0xb5bdc9, { metalness: 0.4, roughness: 0.4 }),
+    mesh: makeBox([-0.3, 0.28, 0], [0.13, 0.13, 0.42], 0xb5bdc9, { metalness: 0.4, roughness: 0.4 }),
     explodeOffset: [-0.8, 0.1, 0],
     info: {
       functie:
-        "Verdeelt de aangezogen lucht gelijkmatig over de cilinders, vlak vóór de injectoren of inlaatkleppen.",
+        "Verdeelt de aangezogen lucht gelijkmatig over de vier cilinders, vlak vóór de injectoren of inlaatkleppen.",
       volgorde:
         "Op de cilinderkop gemonteerd nadat deze zelf op het blok zit.",
       fouten:
@@ -218,19 +220,19 @@ export function createParts() {
     color: 0x707070,
     mesh: makeCurvedTube(
       [
-        [0.34, 0.25, -0.3],
-        [0.42, 0.15, -0.05],
-        [0.4, 0.05, 0.2],
-        [0.3, -0.02, 0.35],
+        [0.28, 0.22, -0.18],
+        [0.34, 0.12, -0.02],
+        [0.32, 0.02, 0.14],
+        [0.24, -0.02, 0.24],
       ],
-      0.035,
+      0.032,
       0x707070,
       { metalness: 0.6, roughness: 0.4 }
     ),
     explodeOffset: [0.8, -0.2, 0.3],
     info: {
       functie:
-        "Voert de verbrande gassen van de cilinders samen naar het uitlaatsysteem. De vorm en lengte van de runners beïnvloedt merkbaar het koppel- en vermogenskarakter van de motor.",
+        "Voert de verbrande gassen van de vier cilinders samen (een klassiek 4-in-1-spruitstuk) naar het uitlaatsysteem. De vorm en lengte van de runners beïnvloedt merkbaar het koppel- en vermogenskarakter van de motor.",
       volgorde:
         "Op de cilinderkop gemonteerd, meestal aan de tegenoverliggende kant van het inlaatspruitstuk.",
       fouten:
@@ -245,18 +247,18 @@ export function createParts() {
     color: 0x2f3644,
     mesh: (() => {
       const group = new THREE.Group();
-      group.add(makeLink([-0.28, -0.2, -0.1], [-0.5, -0.55, -0.1], 0.035, 0x2f3644));
-      group.add(makeLink([0.28, -0.2, -0.1], [0.5, -0.55, -0.1], 0.035, 0x2f3644));
+      group.add(makeLink([-0.24, -0.18, -0.08], [-0.44, -0.5, -0.08], 0.032, 0x2f3644));
+      group.add(makeLink([0.24, -0.18, -0.08], [0.44, -0.5, -0.08], 0.032, 0x2f3644));
       return group;
     })(),
     explodeOffset: [0, -0.9, -0.4],
     info: {
       functie:
-        "Dragen het gewicht van de motor en isoleren trillingen richting de carrosserie, terwijl ze de motor stevig op zijn plek houden — ook onder het hoge, wisselende koppel van driften.",
+        "Dragen het gewicht van de motor en isoleren trillingen richting de carrosserie, terwijl ze de motor stevig op zijn plek houden — ook onder wisselend koppel tijdens het driften.",
       volgorde:
         "Als eerste gemonteerd (op blok en carrosserie/subframe), vóórdat de motor definitief op zijn plek hangt.",
       fouten:
-        "Verharde of gescheurde rubberen motorsteunen laten zitten. Dat geeft extra motorbeweging onder belasting, wat bij een drift-build met veel koppelwisselingen (clutch kicks, gasstoten) versneld tot kabel- of leidingbreuk, of zelfs uitlijnproblemen met de versnellingsbak kan leiden.",
+        "Verharde of gescheurde rubberen motorsteunen laten zitten. Dat geeft extra motorbeweging onder belasting, wat bij een drift-build met veel koppelwisselingen (clutch kicks, gasstoten) versneld tot kabel- of leidingbreuk kan leiden — en bij een toekomstige zwaardere motor (zie hierboven) is dit sowieso een van de eerste onderdelen om te herzien.",
     },
   });
 
