@@ -28,13 +28,16 @@ html, body {
 }
 
 #topbar {
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+#topbar-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0.75rem 1.25rem;
-  background: var(--panel);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
 }
 
 #topbar h1 {
@@ -51,6 +54,52 @@ html, body {
 #topbar-actions {
   display: flex;
   gap: 0.5rem;
+}
+
+#system-tabs {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0 1.25rem 0.65rem;
+  overflow-x: auto;
+}
+
+.system-tab {
+  flex-shrink: 0;
+  background: transparent;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.system-tab:hover {
+  border-color: var(--accent-dim);
+  color: var(--text);
+}
+
+.system-tab.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+#system-description {
+  position: absolute;
+  top: 0.85rem;
+  right: 1rem;
+  max-width: 320px;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--text-dim);
+  background: rgba(28, 32, 40, 0.85);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.7rem;
+  backdrop-filter: blur(4px);
 }
 
 .btn {

@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
-import { createParts } from "./parts.js";
+import { SYSTEMS } from "./systems/registry.js";
 
 const canvas = document.getElementById("scene");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -11,15 +11,12 @@ scene.background = new THREE.Color(0x14171c);
 scene.fog = new THREE.Fog(0x14171c, 6, 14);
 
 const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 100);
-camera.position.set(3.6, 2.2, 3.3);
 
 const controls = new OrbitControls(camera, renderer.domElement);
-controls.target.set(0.5, -0.1, 0);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
-controls.minDistance = 1.2;
+controls.minDistance = 0.3;
 controls.maxDistance = 10;
-controls.update();
 
 scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 const key = new THREE.DirectionalLight(0xffffff, 1.1);
@@ -33,58 +30,137 @@ const grid = new THREE.GridHelper(6, 24, 0x2d3340, 0x22262f);
 grid.position.y = -1.05;
 scene.add(grid);
 
-// --- Onderdelen opbouwen -----------------------------------------------
+// --- DOM-referenties -------------------------------------------------------
 
-const PART_DEFS = createParts();
-
-const parts = PART_DEFS.map((def) => {
-  const mesh = def.mesh;
-  mesh.userData.partId = def.id;
-  mesh.traverse((child) => {
-    if (child.isMesh) child.userData.partId = def.id;
-  });
-  scene.add(mesh);
-
-  const assembledPosition = mesh.position.clone();
-  const explodeOffset = new THREE.Vector3(...def.explodeOffset);
-  const explodedPosition = assembledPosition.clone().add(explodeOffset);
-
-  return {
-    ...def,
-    mesh,
-    assembledPosition,
-    explodedPosition,
-    t: 0, // 0 = gemonteerd, 1 = gedemonteerd
-    tween: null, // {fromT, toT, start, delay, duration}
-  };
-});
-
-const partsById = Object.fromEntries(parts.map((p) => [p.id, p]));
-const originalEmissive = new Map();
-parts.forEach((p) => {
-  p.mesh.traverse((child) => {
-    if (child.isMesh) originalEmissive.set(child, child.material.emissive.clone());
-  });
-});
-
-// --- UI: onderdelenlijst -------------------------------------------------
-
+const systemTabsEl = document.getElementById("system-tabs");
+const systemDescriptionEl = document.getElementById("system-description");
 const partsListEl = document.getElementById("parts-list");
-const sortedForList = [...parts].sort((a, b) => a.order - b.order);
+const partsListTitleEl = document.getElementById("parts-list-title");
 
-sortedForList.forEach((part) => {
-  const li = document.createElement("li");
-  li.className = "parts-list-item";
-  li.dataset.partId = part.id;
-  li.innerHTML = `
-    <span class="order-num">${part.order}</span>
-    <span class="swatch" style="background:#${part.color.toString(16).padStart(6, "0")}"></span>
-    <span class="label">${part.name}</span>
-    <span class="state" data-state></span>
-  `;
-  li.addEventListener("click", () => selectPart(part.id));
-  partsListEl.appendChild(li);
+const infoEmpty = document.getElementById("info-empty");
+const infoContent = document.getElementById("info-content");
+const infoOrder = document.getElementById("info-order");
+const infoName = document.getElementById("info-name");
+const infoFunction = document.getElementById("info-function");
+const infoSequence = document.getElementById("info-sequence");
+const infoMistakes = document.getElementById("info-mistakes");
+const btnTogglePart = document.getElementById("btn-toggle-part");
+const rangeInput = document.getElementById("explode-range");
+
+// --- State per geladen systeem ----------------------------------------------
+
+let parts = [];
+let partsById = {};
+let selectedId = null;
+const originalEmissive = new Map();
+let currentSystemId = null;
+
+function disposeObject3D(root) {
+  root.traverse((child) => {
+    if (!child.isMesh) return;
+    child.geometry.dispose();
+    if (Array.isArray(child.material)) child.material.forEach((m) => m.dispose());
+    else child.material.dispose();
+  });
+}
+
+function clearCurrentSystem() {
+  parts.forEach((part) => {
+    scene.remove(part.mesh);
+    disposeObject3D(part.mesh);
+  });
+  parts = [];
+  partsById = {};
+  selectedId = null;
+  originalEmissive.clear();
+  partsListEl.innerHTML = "";
+  infoEmpty.classList.remove("hidden");
+  infoContent.classList.add("hidden");
+  rangeInput.value = 0;
+}
+
+function loadSystem(systemModule) {
+  clearCurrentSystem();
+  currentSystemId = systemModule.meta.id;
+
+  const defs = systemModule.createParts();
+  parts = defs.map((def) => {
+    const mesh = def.mesh;
+    mesh.userData.partId = def.id;
+    mesh.traverse((child) => {
+      if (child.isMesh) child.userData.partId = def.id;
+    });
+    scene.add(mesh);
+
+    const assembledPosition = mesh.position.clone();
+    const explodeOffset = new THREE.Vector3(...def.explodeOffset);
+    const explodedPosition = assembledPosition.clone().add(explodeOffset);
+
+    return {
+      ...def,
+      mesh,
+      assembledPosition,
+      explodedPosition,
+      t: 0,
+      tween: null,
+    };
+  });
+  partsById = Object.fromEntries(parts.map((p) => [p.id, p]));
+  parts.forEach((p) => {
+    p.mesh.traverse((child) => {
+      if (child.isMesh) originalEmissive.set(child, child.material.emissive.clone());
+    });
+  });
+
+  buildPartsList();
+  systemDescriptionEl.textContent = systemModule.meta.description;
+  partsListTitleEl.textContent = `${systemModule.meta.name} — onderdelen (montagevolgorde)`;
+
+  const camPos = systemModule.meta.cameraPosition ?? [2.6, 1.6, 2.4];
+  const camTarget = systemModule.meta.cameraTarget ?? [0, 0, 0];
+  camera.position.set(...camPos);
+  controls.target.set(...camTarget);
+  controls.update();
+
+  updateTabsActive();
+}
+
+// --- Tabs --------------------------------------------------------------------
+
+SYSTEMS.forEach((systemModule) => {
+  const btn = document.createElement("button");
+  btn.className = "system-tab";
+  btn.textContent = systemModule.meta.short;
+  btn.title = systemModule.meta.name;
+  btn.dataset.systemId = systemModule.meta.id;
+  btn.addEventListener("click", () => loadSystem(systemModule));
+  systemTabsEl.appendChild(btn);
 });
+
+function updateTabsActive() {
+  [...systemTabsEl.children].forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.systemId === currentSystemId);
+  });
+}
+
+// --- Onderdelenlijst -----------------------------------------------------------
+
+function buildPartsList() {
+  const sorted = [...parts].sort((a, b) => a.order - b.order);
+  sorted.forEach((part) => {
+    const li = document.createElement("li");
+    li.className = "parts-list-item";
+    li.dataset.partId = part.id;
+    li.innerHTML = `
+      <span class="order-num">${part.order}</span>
+      <span class="swatch" style="background:#${part.color.toString(16).padStart(6, "0")}"></span>
+      <span class="label">${part.name}</span>
+      <span class="state" data-state></span>
+    `;
+    li.addEventListener("click", () => selectPart(part.id));
+    partsListEl.appendChild(li);
+  });
+}
 
 function refreshPartsListState() {
   parts.forEach((part) => {
@@ -97,17 +173,6 @@ function refreshPartsListState() {
 }
 
 // --- Selectie & infopaneel ------------------------------------------------
-
-let selectedId = null;
-
-const infoEmpty = document.getElementById("info-empty");
-const infoContent = document.getElementById("info-content");
-const infoOrder = document.getElementById("info-order");
-const infoName = document.getElementById("info-name");
-const infoFunction = document.getElementById("info-function");
-const infoSequence = document.getElementById("info-sequence");
-const infoMistakes = document.getElementById("info-mistakes");
-const btnTogglePart = document.getElementById("btn-toggle-part");
 
 function setHighlight(part, on) {
   part.mesh.traverse((child) => {
@@ -208,20 +273,19 @@ const STAGGER_MS = 110;
 const DURATION_MS = 650;
 
 document.getElementById("btn-explode").addEventListener("click", () => {
-  const ordered = [...parts].sort((a, b) => b.order - a.order); // laatst gemonteerde deel gaat er eerst af
+  const ordered = [...parts].sort((a, b) => b.order - a.order);
   ordered.forEach((part, i) => startTween(part, 1, i * STAGGER_MS, DURATION_MS));
   setTimeout(updateToggleButton, ordered.length * STAGGER_MS + DURATION_MS);
 });
 
 document.getElementById("btn-assemble").addEventListener("click", () => {
-  const ordered = [...parts].sort((a, b) => a.order - b.order); // eerst gemonteerde deel komt er eerst weer aan
+  const ordered = [...parts].sort((a, b) => a.order - b.order);
   ordered.forEach((part, i) => startTween(part, 0, i * STAGGER_MS, DURATION_MS));
   setTimeout(updateToggleButton, ordered.length * STAGGER_MS + DURATION_MS);
 });
 
 // --- Handmatige demontagegraad-slider ---------------------------------------
 
-const rangeInput = document.getElementById("explode-range");
 rangeInput.addEventListener("input", () => {
   stopAllTweens();
   const t = Number(rangeInput.value) / 100;
@@ -249,3 +313,7 @@ function animate(now) {
   requestAnimationFrame(animate);
 }
 requestAnimationFrame(animate);
+
+// --- Start ---------------------------------------------------------------
+
+loadSystem(SYSTEMS[0]);

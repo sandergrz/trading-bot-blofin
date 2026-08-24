@@ -1,6 +1,4 @@
 // Schematische geometrie + kennisdata voor de linker voorwielophanging van een BMW E36.
-// Geen fotorealisme: eenvoudige primitieven, correct gepositioneerd t.o.v. elkaar,
-// zodat de opbouw en montagevolgorde begrijpelijk blijven.
 //
 // Coordinatensysteem (meters, bij benadering):
 //   x = 0  -> hart van het wiel (buitenkant, wielzijde)
@@ -11,72 +9,21 @@
 //   z > 0  -> naar voren van de auto
 
 import * as THREE from "three";
+import { makeLink, makeBox, makeCylinder, makeSphere, makeCoilSpring, material } from "./helpers.js";
 
-function material(color, opts = {}) {
-  return new THREE.MeshStandardMaterial({
-    color,
-    roughness: opts.roughness ?? 0.55,
-    metalness: opts.metalness ?? 0.35,
-    transparent: !!opts.transparent,
-    opacity: opts.opacity ?? 1,
-  });
-}
-
-// Bouwt een staafvormige geometrie tussen twee punten (control arms, stangen, strut-body).
-function makeLink(a, b, radius, color, opts = {}) {
-  const pa = new THREE.Vector3(...a);
-  const pb = new THREE.Vector3(...b);
-  const dir = new THREE.Vector3().subVectors(pb, pa);
-  const length = dir.length();
-  const mid = new THREE.Vector3().addVectors(pa, pb).multiplyScalar(0.5);
-
-  const geometry = new THREE.CylinderGeometry(radius, opts.radius2 ?? radius, length, 14);
-  const mesh = new THREE.Mesh(geometry, material(color, opts));
-  mesh.position.copy(mid);
-  const up = new THREE.Vector3(0, 1, 0);
-  mesh.quaternion.setFromUnitVectors(up, dir.clone().normalize());
-  return mesh;
-}
-
-// Cilinder met de as langs X (voor naaf, remschijf) op een punt.
-function makeAxleCylinder(point, radius, length, color, opts = {}) {
-  const geometry = new THREE.CylinderGeometry(radius, radius, length, opts.segments ?? 24, 1, false);
-  const mesh = new THREE.Mesh(geometry, material(color, opts));
-  mesh.position.set(...point);
-  mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(1, 0, 0));
-  return mesh;
-}
-
-function makeBox(center, size, color, opts = {}) {
-  const geometry = new THREE.BoxGeometry(...size);
-  const mesh = new THREE.Mesh(geometry, material(color, opts));
-  mesh.position.set(...center);
-  if (opts.rotationY) mesh.rotation.y = opts.rotationY;
-  return mesh;
-}
-
-function makeCoilSpring(center, radiusCoil, tubeRadius, height, turns, color) {
-  const [cx, cy, cz] = center;
-  const points = [];
-  const segments = 120;
-  for (let i = 0; i <= segments; i++) {
-    const t = i / segments;
-    const angle = t * Math.PI * 2 * turns;
-    const y = cy - height / 2 + t * height;
-    points.push(
-      new THREE.Vector3(cx + Math.cos(angle) * radiusCoil, y, cz + Math.sin(angle) * radiusCoil)
-    );
-  }
-  const curve = new THREE.CatmullRomCurve3(points);
-  const geometry = new THREE.TubeGeometry(curve, 200, tubeRadius, 8, false);
-  const mesh = new THREE.Mesh(geometry, material(color, { metalness: 0.6, roughness: 0.35 }));
-  return mesh;
-}
+export const meta = {
+  id: "voorwielophanging",
+  name: "Voorwielophanging",
+  short: "Voor",
+  description:
+    "De linker voorwielophanging (McPherson-veerpoot): draagarm, kogelgewricht, schokdemper, veer en stuurkoppeling.",
+  cameraPosition: [3.6, 2.2, 3.3],
+  cameraTarget: [0.5, -0.1, 0],
+};
 
 export function createParts() {
   const defs = [];
 
-  // 1. Subframe (hulpframe) — draagt de ophanging aan de carrosserie.
   defs.push({
     id: "subframe",
     name: "Subframe (hulpframe)",
@@ -94,7 +41,6 @@ export function createParts() {
     },
   });
 
-  // 2. Draagarm (onderste draagarm / wishbone) — twee staven vormen een V naar het subframe.
   const ballJointPos = [0, -0.38, 0.02];
   const armFrontPivot = [0.85, -0.42, 0.32];
   const armRearPivot = [0.85, -0.42, -0.28];
@@ -119,18 +65,12 @@ export function createParts() {
     },
   });
 
-  // 3. Kogelgewricht (ball joint)
   defs.push({
     id: "kogelgewricht",
     name: "Kogelgewricht",
     order: 3,
     color: 0xd0a23a,
-    mesh: (() => {
-      const geo = new THREE.SphereGeometry(0.055, 20, 16);
-      const mesh = new THREE.Mesh(geo, material(0xd0a23a, { metalness: 0.7, roughness: 0.3 }));
-      mesh.position.set(...ballJointPos);
-      return mesh;
-    })(),
+    mesh: makeSphere(ballJointPos, 0.055, 0xd0a23a, { metalness: 0.7, roughness: 0.3 }),
     explodeOffset: [-0.35, -0.25, 0.2],
     info: {
       functie:
@@ -142,7 +82,6 @@ export function createParts() {
     },
   });
 
-  // 4. Stabilisatorstang + koppelstang
   const swayBarNear = [0.85, -0.58, -0.22];
   const swayBarFar = [2.05, -0.58, -0.22];
   const swayLinkArm = [0.32, -0.42, -0.05];
@@ -166,11 +105,10 @@ export function createParts() {
     },
   });
 
-  // 5. Fusee & wiellager (knuckle + hub)
   const hubPoint = [0, 0, 0];
   const fuseeGroup = new THREE.Group();
   fuseeGroup.add(makeBox([0.02, 0.02, 0], [0.16, 0.7, 0.16], 0x6e7889));
-  fuseeGroup.add(makeAxleCylinder(hubPoint, 0.085, 0.16, 0x8a94a3, { metalness: 0.7, roughness: 0.25 }));
+  fuseeGroup.add(makeCylinder(hubPoint, 0.085, 0.16, 0x8a94a3, { axis: "x", metalness: 0.7, roughness: 0.25 }));
   defs.push({
     id: "fusee",
     name: "Fusee & wiellager",
@@ -188,7 +126,6 @@ export function createParts() {
     },
   });
 
-  // 6. Schokdemper (strut body)
   const strutBottom = [0, 0.32, -0.01];
   const strutTop = [0.03, 0.78, -0.06];
   defs.push({
@@ -208,7 +145,6 @@ export function createParts() {
     },
   });
 
-  // 7. Veer (coilspring)
   defs.push({
     id: "veer",
     name: "Veer",
@@ -226,18 +162,18 @@ export function createParts() {
     },
   });
 
-  // 8. Veerpootlager (top mount)
   const topMountPoint = strutTop;
   defs.push({
     id: "veerpootlager",
     name: "Veerpootlager (top mount)",
     order: 8,
     color: 0x2f3644,
-    mesh: makeAxleCylinder(
+    mesh: makeCylinder(
       [topMountPoint[0], topMountPoint[1] + 0.02, topMountPoint[2]],
       0.09,
       0.05,
-      0x2f3644
+      0x2f3644,
+      { axis: "x" }
     ),
     explodeOffset: [0.15, 0.7, -0.3],
     info: {
@@ -250,7 +186,6 @@ export function createParts() {
     },
   });
 
-  // 9. Spoorstang / stuurkogel (tie rod end)
   const steeringArmPoint = [0, -0.02, 0.24];
   const rackPoint = [0.95, -0.08, 0.4];
   defs.push({
@@ -270,13 +205,13 @@ export function createParts() {
     },
   });
 
-  // 10. Remschijf (brake disc)
   defs.push({
     id: "remschijf",
     name: "Remschijf",
     order: 10,
     color: 0x707070,
-    mesh: makeAxleCylinder([0.055, 0, 0], 0.29, 0.028, 0x707070, {
+    mesh: makeCylinder([0.055, 0, 0], 0.29, 0.028, 0x707070, {
+      axis: "x",
       metalness: 0.55,
       roughness: 0.5,
       segments: 32,
@@ -292,7 +227,6 @@ export function createParts() {
     },
   });
 
-  // 11. Remklauw (brake caliper)
   defs.push({
     id: "remklauw",
     name: "Remklauw",
@@ -310,7 +244,6 @@ export function createParts() {
     },
   });
 
-  // 12. Wiel (context, geen ophangingsonderdeel)
   defs.push({
     id: "wiel",
     name: "Wiel (velg + band)",
@@ -318,13 +251,15 @@ export function createParts() {
     color: 0x20242c,
     mesh: (() => {
       const group = new THREE.Group();
-      const tire = makeAxleCylinder([0, 0, 0], 0.34, 0.22, 0x20242c, {
+      const tire = makeCylinder([0, 0, 0], 0.34, 0.22, 0x20242c, {
+        axis: "x",
         metalness: 0.1,
         roughness: 0.9,
         transparent: true,
         opacity: 0.55,
       });
-      const rim = makeAxleCylinder([0, 0, 0], 0.19, 0.22, 0x9aa4b5, {
+      const rim = makeCylinder([0, 0, 0], 0.19, 0.22, 0x9aa4b5, {
+        axis: "x",
         metalness: 0.8,
         roughness: 0.3,
         transparent: true,

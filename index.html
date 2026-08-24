@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BMW E36 — Interactieve Voorwielophanging</title>
+  <title>BMW E36 — Interactief Samenstellingsplan</title>
   <link rel="stylesheet" href="style.css" />
   <script type="importmap">
     {
@@ -17,16 +17,20 @@
 <body>
   <div id="app">
     <header id="topbar">
-      <h1>BMW E36 <span>·</span> Interactieve Voorwielophanging</h1>
-      <div id="topbar-actions">
-        <button id="btn-assemble" class="btn">Monteer alles</button>
-        <button id="btn-explode" class="btn">Demonteer alles</button>
+      <div id="topbar-row">
+        <h1>BMW E36 <span>·</span> Interactief Samenstellingsplan</h1>
+        <div id="topbar-actions">
+          <button id="btn-assemble" class="btn">Monteer alles</button>
+          <button id="btn-explode" class="btn">Demonteer alles</button>
+        </div>
       </div>
+      <nav id="system-tabs" aria-label="Deelsystemen"></nav>
     </header>
 
     <main>
       <div id="viewport">
         <canvas id="scene"></canvas>
+        <div id="system-description"></div>
         <div id="viewport-hint">Sleep om te draaien · scroll om te zoomen · klik op een onderdeel</div>
         <div id="explode-slider-wrap">
           <label for="explode-range">Demontagegraad</label>
@@ -59,7 +63,7 @@
         </div>
 
         <div id="parts-list-wrap">
-          <h3>Onderdelen (montagevolgorde)</h3>
+          <h3 id="parts-list-title">Onderdelen (montagevolgorde)</h3>
           <ol id="parts-list"></ol>
         </div>
       </aside>
