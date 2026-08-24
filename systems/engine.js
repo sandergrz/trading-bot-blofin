@@ -10,7 +10,7 @@
 // z>0 voorkant motor (poelie-/radiateurzijde), z<0 vliegwielzijde (richting bak).
 
 import * as THREE from "three";
-import { makeLink, makeBox, makeCylinder, makeSphere, makeCurvedTube } from "./helpers.js";
+import { makeLink, makeBox, makeCylinder, makeSphere, makeTorus, makeCurvedTube } from "./helpers.js";
 
 export const meta = {
   id: "motor",
@@ -30,12 +30,22 @@ export function createParts() {
 
   // --- Blok & carter ------------------------------------------------------
 
+  const blockGroup = new THREE.Group();
+  blockGroup.add(makeBox([0, 0.05, 0], [0.46, 0.46, 0.55], 0x4a5568));
+  // Bellhousing-flens aan de vliegwielzijde en een montagerand voor het carter,
+  // zodat het blok afleesbaar is als motorblok en niet als kale kubus.
+  blockGroup.add(makeBox([0, 0.05, -0.275], [0.5, 0.5, 0.025], 0x3c4453, { roughness: 0.6 }));
+  blockGroup.add(makeBox([0, -0.17, 0], [0.44, 0.03, 0.53], 0x3c4453, { roughness: 0.6 }));
+  // Cilinderboringen: zichtbaar verdiept in het bovenvlak, op de plek van de zuigers.
+  CYLINDER_Z.forEach((z) => {
+    blockGroup.add(makeCylinder([0, 0.275, z], 0.052, 0.015, 0x14171a, { roughness: 0.9, metalness: 0.1 }));
+  });
   defs.push({
     id: "motorblok",
     name: "Motorblok",
     order: 1,
     color: 0x4a5568,
-    mesh: makeBox([0, 0.05, 0], [0.46, 0.46, 0.55], 0x4a5568),
+    mesh: blockGroup,
     explodeOffset: [0, -1.3, 0],
     info: {
       functie:
@@ -327,6 +337,7 @@ export function createParts() {
   const pulleyCenter = [0, -0.07, 0.37];
   const pulleyGroup = new THREE.Group();
   pulleyGroup.add(makeCylinder(pulleyCenter, 0.095, 0.05, 0x394452, { axis: "z", metalness: 0.6 }));
+  pulleyGroup.add(makeTorus(pulleyCenter, 0.095, 0.008, 0x1a1e25, { axis: "z" }));
   defs.push({
     id: "krukaspoelie",
     name: "Krukaspoelie + accessoireriem",
@@ -345,12 +356,34 @@ export function createParts() {
   });
 
   const alternatorCenter = [0.2, 0.08, 0.3];
+  const alternatorPulleyFace = [alternatorCenter[0], alternatorCenter[1], alternatorCenter[2] + 0.06];
+  const alternatorGroup = new THREE.Group();
+  alternatorGroup.add(makeCylinder(alternatorCenter, 0.06, 0.1, 0x707070, { axis: "z", metalness: 0.55, roughness: 0.4 }));
+  alternatorGroup.add(makeCylinder(alternatorPulleyFace, 0.035, 0.02, 0x394452, { axis: "z", metalness: 0.6 }));
+  // De aandrijfriem tussen krukas- en alternatorpoelie, als twee strakke banden.
+  const beltRadiusOffset = 0.06;
+  alternatorGroup.add(
+    makeLink(
+      [pulleyCenter[0], pulleyCenter[1] + beltRadiusOffset, pulleyCenter[2]],
+      [alternatorPulleyFace[0], alternatorPulleyFace[1] + 0.035, alternatorPulleyFace[2]],
+      0.006,
+      0x14171a
+    )
+  );
+  alternatorGroup.add(
+    makeLink(
+      [pulleyCenter[0], pulleyCenter[1] - beltRadiusOffset, pulleyCenter[2]],
+      [alternatorPulleyFace[0], alternatorPulleyFace[1] - 0.035, alternatorPulleyFace[2]],
+      0.006,
+      0x14171a
+    )
+  );
   defs.push({
     id: "alternator",
     name: "Alternator",
     order: 17,
     color: 0x707070,
-    mesh: makeCylinder(alternatorCenter, 0.06, 0.1, 0x707070, { axis: "z", metalness: 0.55, roughness: 0.4 }),
+    mesh: alternatorGroup,
     explodeOffset: [0.6, 0.2, 0.3],
     info: {
       functie:
@@ -383,9 +416,21 @@ export function createParts() {
   // --- Ontsteking -----------------------------------------------------------
 
   const distributorCenter = [0.15, 0.4, -0.2];
+  const distributorCapTop = [distributorCenter[0], distributorCenter[1] + 0.085, distributorCenter[2]];
   const distributorGroup = new THREE.Group();
   distributorGroup.add(makeCylinder(distributorCenter, 0.035, 0.08, 0xd0a23a, { axis: "y", metalness: 0.4 }));
   distributorGroup.add(makeSphere([distributorCenter[0], distributorCenter[1] + 0.05, distributorCenter[2]], 0.035, 0x2f3644, { roughness: 0.5 }));
+  // Bougiekabels: van de verdelerkap naar elke bougie, zodat het ontstekingscircuit visueel klopt.
+  CYLINDER_Z.forEach((z) => {
+    distributorGroup.add(
+      makeCurvedTube(
+        [distributorCapTop, [distributorCenter[0] * 0.4, 0.42, (distributorCenter[2] + z) / 2], [0, 0.4, z]],
+        0.007,
+        0x1a1e25,
+        { roughness: 0.8 }
+      )
+    );
+  });
   defs.push({
     id: "verdeler",
     name: "Verdeler",
@@ -480,12 +525,28 @@ export function createParts() {
     },
   });
 
+  const intakePlenum = [-0.34, 0.3, 0];
+  const intakeGroup = new THREE.Group();
+  intakeGroup.add(makeBox(intakePlenum, [0.1, 0.1, 0.4], 0xb5bdc9, { metalness: 0.4, roughness: 0.4 }));
+  CYLINDER_Z.forEach((z) => {
+    intakeGroup.add(
+      makeCurvedTube(
+        [
+          [intakePlenum[0] + 0.05, intakePlenum[1], z * 0.5],
+          [-0.21, 0.28, z],
+        ],
+        0.022,
+        0xb5bdc9,
+        { metalness: 0.4, roughness: 0.4 }
+      )
+    );
+  });
   defs.push({
     id: "inlaatspruitstuk",
     name: "Inlaatspruitstuk",
     order: 24,
     color: 0xb5bdc9,
-    mesh: makeBox([-0.3, 0.28, 0], [0.13, 0.13, 0.42], 0xb5bdc9, { metalness: 0.4, roughness: 0.4 }),
+    mesh: intakeGroup,
     explodeOffset: [-0.8, 0.1, 0],
     info: {
       functie:
@@ -497,22 +558,29 @@ export function createParts() {
     },
   });
 
+  const exhaustCollector = [0.3, -0.06, 0.22];
+  const exhaustGroup = new THREE.Group();
+  CYLINDER_Z.forEach((z) => {
+    exhaustGroup.add(
+      makeCurvedTube(
+        [
+          [0.21, 0.28, z],
+          [0.32, 0.14, z * 0.4],
+          exhaustCollector,
+        ],
+        0.02,
+        0x707070,
+        { metalness: 0.6, roughness: 0.4 }
+      )
+    );
+  });
+  exhaustGroup.add(makeCylinder(exhaustCollector, 0.045, 0.06, 0x5a6472, { axis: "z", metalness: 0.6, roughness: 0.4 }));
   defs.push({
     id: "uitlaatspruitstuk",
     name: "Uitlaatspruitstuk",
     order: 25,
     color: 0x707070,
-    mesh: makeCurvedTube(
-      [
-        [0.28, 0.22, -0.18],
-        [0.34, 0.12, -0.02],
-        [0.32, 0.02, 0.14],
-        [0.24, -0.02, 0.24],
-      ],
-      0.032,
-      0x707070,
-      { metalness: 0.6, roughness: 0.4 }
-    ),
+    mesh: exhaustGroup,
     explodeOffset: [0.8, -0.2, 0.3],
     info: {
       functie:
